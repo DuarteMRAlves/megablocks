@@ -11,8 +11,9 @@ import torch
 # instructions for building the c++ operations.
 try:
     import megablocks_ops as ops  # type: ignore
+    MEGABLOCKS_OPS_AVAILABLE = True
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'megablocks_ops'.") from e
+    MEGABLOCKS_OPS_AVAILABLE = False
 
 
 # Autograd wrapper for histogram kernel.
@@ -21,6 +22,8 @@ class HistogramOp(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, max_val: float):
+        if not MEGABLOCKS_OPS_AVAILABLE:
+            return torch.stack([torch.histc(y, max_val, 0, max_val - 1) for y in torch.split(x, 1)])
         return ops.histogram(x, max_val)
 
 

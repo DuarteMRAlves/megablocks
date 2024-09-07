@@ -7,12 +7,15 @@ from typing import Any, Optional, Tuple
 # extensions. Otherwise libc10.so cannot be found.
 import torch
 
+from megablocks.op import op
+
 # Wrap this in a try-block with better error message and
 # instructions for building the c++ operations.
 try:
     import megablocks_ops as ops  # type: ignore
+    MEGABLOCKS_OPS_AVAILABLE = True
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'megablocks_ops'.") from e
+    MEGABLOCKS_OPS_AVAILABLE = False
 
 _BITS_FOR_DTYPE = {
     torch.int16: 16,
@@ -27,6 +30,9 @@ class SortOp(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, end_bit: Optional[int] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        if not MEGABLOCKS_OPS_AVAILABLE:
+            return torch.sort(x)
+
         if end_bit is None:
             end_bit = _BITS_FOR_DTYPE[x.dtype]
         x_out = torch.empty_like(x)

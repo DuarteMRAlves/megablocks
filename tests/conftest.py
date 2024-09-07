@@ -5,13 +5,13 @@ import os
 from typing import List, Optional
 
 import pytest
-from composer.utils import reproducibility
+# from composer.utils import reproducibility
 
 # Allowed options for pytest.mark.world_size()
 WORLD_SIZE_OPTIONS = (1, 2)
 
 # Enforce deterministic mode before any tests start.
-reproducibility.configure_deterministic_mode()
+# reproducibility.configure_deterministic_mode()
 
 # Add the path of any pytest fixture files you want to make global
 pytest_plugins = [

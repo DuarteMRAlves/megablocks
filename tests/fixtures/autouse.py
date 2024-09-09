@@ -5,11 +5,12 @@ import gc
 import logging
 import os
 
-import composer
+#import composer
+import torch.distributed as dist
 import pytest
 import torch
-from composer.devices import DeviceCPU, DeviceGPU
-from composer.utils import dist, reproducibility
+#from composer.devices import DeviceCPU, DeviceGPU
+#from composer.utils import dist, reproducibility
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +39,8 @@ def cleanup_dist():
     yield
     # Avoid race condition where a test is still writing to a file on one rank
     # while the file system is being torn down on another rank.
-    dist.barrier()
+    if dist.is_initialized():
+        dist.barrier()
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -47,7 +49,7 @@ def configure_dist(request: pytest.FixtureRequest):
     # so individual tests that do not use the trainer
     # do not need to worry about manually configuring dist.
 
-    if dist.get_world_size() == 1:
+    if get_world_size() == 1:
         return
 
     device = None
@@ -70,7 +72,7 @@ def configure_dist(request: pytest.FixtureRequest):
 def set_log_levels():
     """Ensures all log levels are set to DEBUG."""
     logging.basicConfig()
-    logging.getLogger(composer.__name__).setLevel(logging.DEBUG)
+    #logging.getLogger(composer.__name__).setLevel(logging.DEBUG)
 
 
 @pytest.fixture(autouse=True)
@@ -80,12 +82,13 @@ def seed_all(rank_zero_seed: int, monkeypatch: pytest.MonkeyPatch):
     Make get_random_seed to always return the rank zero seed, and set the random seed before each test to the rank local
     seed.
     """
-    monkeypatch.setattr(
-        reproducibility,
-        'get_random_seed',
-        lambda: rank_zero_seed,
-    )
-    reproducibility.seed_all(rank_zero_seed + dist.get_global_rank())
+    pass
+    # monkeypatch.setattr(
+    #     reproducibility,
+    #     'get_random_seed',
+    #     lambda: rank_zero_seed,
+    # )
+    # reproducibility.seed_all(rank_zero_seed + dist.get_global_rank())
 
 
 @pytest.fixture(autouse=True)
@@ -105,3 +108,6 @@ def remove_run_name_env_var():
         os.environ['COMPOSER_RUN_NAME'] = composer_run_name
     if run_name is not None:
         os.environ['RUN_NAME'] = run_name
+
+def get_world_size():
+    return int(os.environ.get('WORLD_SIZE', 1))

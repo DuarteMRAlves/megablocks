@@ -163,3 +163,4 @@ package-lock.json
 
 # pycharm
 .idea/
+private-scripts

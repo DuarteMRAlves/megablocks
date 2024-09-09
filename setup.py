@@ -11,11 +11,8 @@ from setuptools import find_packages, setup
 
 # We require torch in setup.py to build cpp extensions "ahead of time"
 # More info here: # https://pytorch.org/tutorials/advanced/cpp_extension.html
-try:
-    import torch
-    from torch.utils.cpp_extension import CUDA_HOME, BuildExtension, CUDAExtension
-except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'torch'. `torch` is required to install `MegaBlocks`.",) from e
+import torch
+from torch.utils.cpp_extension import CUDA_HOME, ROCM_HOME, BuildExtension, CUDAExtension
 
 _PACKAGE_NAME = 'megablocks'
 _PACKAGE_DIR = 'megablocks'
@@ -62,8 +59,8 @@ classifiers = [
 install_requires = [
     'numpy>=1.21.5,<2.1.0',
     'packaging>=21.3.0,<24.2',
-    'torch>=2.4.0,<2.4.1',
-    'triton>=2.1.0',
+    #'torch>=2.4.0,<2.4.1',
+    #'triton>=2.1.0',
     'stanford-stk==0.7.1',
 ]
 
@@ -92,8 +89,14 @@ cmdclass = {}
 ext_modules = []
 
 # Only install CUDA extensions if available
-if 'cu' in torch.__version__ and CUDA_HOME is not None:
-
+print(f"torch.__version__ = {torch.__version__}")
+print(f"CUDA_HOME = {CUDA_HOME}")
+print(f"ROCM_HOME = {ROCM_HOME}")
+is_cuda = "cu" in torch.__version__ and CUDA_HOME is not None
+is_rocm = "rocm" in torch.__version__ and ROCM_HOME is not None
+print(f"is_cuda = {is_cuda}")
+print(f"is_rocm = {is_rocm}")
+if is_cuda:
     cmdclass = {'build_ext': BuildExtension}
     nvcc_flags = ['--ptxas-options=-v', '--optimize=2']
 
@@ -118,14 +121,10 @@ if 'cu' in torch.__version__ and CUDA_HOME is not None:
             },
         ),
     ]
-elif CUDA_HOME is None:
-    warnings.warn(
-        'Attempted to install CUDA extensions, but CUDA_HOME was None. ' +
-        'Please install CUDA and ensure that the CUDA_HOME environment ' +
-        'variable points to the installation location.',
-    )
+elif is_rocm:
+    warnings.warn('Warning: No rocm specific compilation required for now.')
 else:
-    warnings.warn('Warning: No CUDA devices; cuda code will not be compiled.')
+    warnings.warn('Warning: Torch version not compiled for any gpu.')
 
 setup(
     name=_PACKAGE_NAME,

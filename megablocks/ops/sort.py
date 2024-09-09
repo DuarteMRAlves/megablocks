@@ -7,8 +7,6 @@ from typing import Any, Optional, Tuple
 # extensions. Otherwise libc10.so cannot be found.
 import torch
 
-from megablocks.op import op
-
 # Wrap this in a try-block with better error message and
 # instructions for building the c++ operations.
 try:

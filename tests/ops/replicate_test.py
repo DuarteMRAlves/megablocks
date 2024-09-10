@@ -88,10 +88,11 @@ def test_replicate(tokens: int, num_centers: int, top_k: int):
 
     out = ops.replicate(center_weights, bins, tokens)
     expected_out = replicate(center_weights, bins, tokens)
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))
 
 
-@pytest.mark.skip("Requires direct access to megablocks_ops.")
+@pytest.mark.skipif(not MEGABLOCKS_OPS_AVAILABLE, reason="Requires direct access to megablocks_ops.")
 @pytest.mark.gpu
 @pytest.mark.parametrize(('tokens', 'num_centers', 'top_k'), REPLICATE_TESTS)
 def test_replicate_backward(tokens: int, num_centers: int, top_k: int):

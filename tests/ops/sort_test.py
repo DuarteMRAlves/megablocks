@@ -53,6 +53,7 @@ def test_sort(n: int, dtype: torch.dtype, max_val: Optional[int]):
 
     out, indices = ops.sort(x, end_bit)
     expected_out, expected_indices = torch.sort(x)
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))
 
     # NOTE: The indices can be in different order depending

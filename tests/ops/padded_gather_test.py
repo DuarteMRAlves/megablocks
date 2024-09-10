@@ -91,4 +91,5 @@ def testPaddedGather(sl: int, hs: int, ne: int, top_k: int):
 
     out = ops.padded_gather(x, indices, bin_ids, bins, padded_bins, top_k)
     expected_out = padded_gather(x, indices, bin_ids, bins, padded_bins, top_k)
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))

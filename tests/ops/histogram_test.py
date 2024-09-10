@@ -79,4 +79,5 @@ def test_histogram(m: int, n: int, dtype: torch.dtype, max_val: int):
 
     out = ops.histogram(x, max_val)
     expected_out = torch.stack([torch.histc(y, max_val, 0, max_val - 1) for y in torch.split(x, 1)])
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))

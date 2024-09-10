@@ -78,4 +78,5 @@ def test_topology(sl: int, hs: int, ne: int):
         output_block_rows,
         output_block_columns,
     )
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))

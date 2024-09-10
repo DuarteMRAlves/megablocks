@@ -143,6 +143,7 @@ def testPaddedScatter(sl: int, hs: int, ne: int, top_k: int):
         padded_bins,
         top_k,
     )
+    assert out.shape == expected_out.shape
 
     out.backward(torch.randn_like(out))  # sanity check backward pass
 

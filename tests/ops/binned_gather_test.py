@@ -68,4 +68,5 @@ def test_binned_gather(sl: int, hs: int, ne: int, top_k: int):
 
     out = ops.binned_gather(x, indices, bins, ec, top_k)
     expected_out = binned_gather(x, indices, bins, ec, top_k)
+    assert out.shape == expected_out.shape
     assert torch.all(torch.eq(out, expected_out))

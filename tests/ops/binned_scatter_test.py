@@ -77,7 +77,7 @@ def testBinnedScatter(sl: int, hs: int, ne: int, top_k: int):
 
     out = ops.binned_scatter(x, indices, weights, bins, top_k)
     expected_out = binned_scatter(x, indices, weights, bins, top_k)
-
+    assert out.shape == expected_out.shape
     # NOTE: We need to check approximate equality because the
     # scatter reduce uses atomics.
     assert np.testing.assert_allclose(

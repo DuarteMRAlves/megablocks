@@ -23,6 +23,8 @@ class HistogramOp(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, max_val: float):
         if not MEGABLOCKS_OPS_AVAILABLE:
+            if len(x.size()) == 1:
+                return torch.histc(x, max_val, 0, max_val - 1)
             return torch.stack([torch.histc(y, max_val, 0, max_val - 1) for y in torch.split(x, 1)])
         return ops.histogram(x, max_val)
 

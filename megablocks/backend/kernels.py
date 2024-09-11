@@ -66,7 +66,7 @@ def _padded_copy(
     # Now we know what bin we're assigned to, but we need to know how
     # many threadblocks were assigned to earlier bins so we can offset
     # in our bin properly.
-    offset_in_bin = tl.program_id(0)
+    offset_in_bin = tl.program_id(0).cast(tl.int64)
     if bin_idx > 0:
         offset_in_bin -= tl.load(bins + bin_idx - 1)
 
@@ -247,7 +247,7 @@ def _padded_copy_wgrad(
     # Now we know what bin we're assigned to, but we need to know how
     # many threadblocks were assigned to earlier bins so we can offset
     # in our bin properly.
-    offset_in_bin = tl.program_id(0)
+    offset_in_bin = tl.program_id(0).cast(tl.int64)
     if bin_idx > 0:
         offset_in_bin -= tl.load(bins + bin_idx - 1)
 
@@ -346,7 +346,7 @@ def _binned_copy(
 
     # Load the index bounds for our bin and calculate
     # the number of tokens assigned to our expert.
-    start = 0
+    start = tl.zeros((), dtype=tl.int64)
     if expert_idx > 0:
         start = tl.load(bins + expert_idx - 1)
     end = tl.load(bins + expert_idx)

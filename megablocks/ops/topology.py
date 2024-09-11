@@ -3,6 +3,7 @@
 
 from typing import Any
 
+import numpy as np
 # NOTE: Torch needs to be imported before the custom
 # extensions. Otherwise libc10.so cannot be found.
 import torch

@@ -346,7 +346,7 @@ def _binned_copy(
 
     # Load the index bounds for our bin and calculate
     # the number of tokens assigned to our expert.
-    start = tl.zeros((), dtype=tl.int64)
+    start = tl.zeros((), dtype=expert_idx.dtype)
     if expert_idx > 0:
         start = tl.load(bins + expert_idx - 1)
     end = tl.load(bins + expert_idx)

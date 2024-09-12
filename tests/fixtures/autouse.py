@@ -4,6 +4,8 @@
 import gc
 import logging
 import os
+import random
+import numpy as np
 
 #import composer
 import torch.distributed as dist
@@ -82,7 +84,13 @@ def seed_all(rank_zero_seed: int, monkeypatch: pytest.MonkeyPatch):
     Make get_random_seed to always return the rank zero seed, and set the random seed before each test to the rank local
     seed.
     """
-    pass
+    # Copied from composer.utils.reproducibility.seed_all
+    random.seed(rank_zero_seed + get_global_rank())
+    np.random.seed(rank_zero_seed + get_global_rank())
+    torch.manual_seed(rank_zero_seed + get_global_rank())
+    # torch.manual_seed may call manual_seed_all but calling it again here
+    # to make sure it gets called at least once
+    torch.cuda.manual_seed_all(rank_zero_seed + get_global_rank())
     # monkeypatch.setattr(
     #     reproducibility,
     #     'get_random_seed',
@@ -111,3 +119,6 @@ def remove_run_name_env_var():
 
 def get_world_size():
     return int(os.environ.get('WORLD_SIZE', 1))
+
+def get_global_rank():
+    return int(os.environ.get('RANK', 0))

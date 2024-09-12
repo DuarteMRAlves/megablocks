@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import warnings
+import torch
 from typing import List, Optional
 
 import pytest
@@ -12,6 +14,52 @@ WORLD_SIZE_OPTIONS = (1, 2)
 
 # Enforce deterministic mode before any tests start.
 # reproducibility.configure_deterministic_mode()
+def configure_deterministic_mode():
+    """Copied from composer.utils.reproducibility.configure_deterministic_mode
+
+    Configure PyTorch deterministic mode.
+
+    .. note::
+
+        When using the :class:`.Trainer`, you can use the ``deterministic_mode`` flag
+        instead of invoking this function directly.
+        For example:
+
+        .. testsetup::
+
+            import warnings
+
+            warnings.filterwarnings(action="ignore", message="Deterministic mode is activated.")
+
+        .. doctest::
+
+            >>> trainer = Trainer(deterministic_mode=True)
+
+        .. testcleanup::
+
+            warnings.resetwarnings()
+
+        However, to configure deterministic mode for operations before the trainer is initialized, manually invoke this
+        function at the beginning of your training script.
+
+    .. note::
+
+        When training on a GPU, this function must be invoked before any CUDA operations.
+
+    .. note::
+
+        Deterministic mode degrades performance. Do not use outside of testing and debugging.
+    """
+    print("Deterministic mode is activated. This will negatively impact performance.")
+    torch.use_deterministic_algorithms(True)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    # See https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html
+    # and https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+    warnings.warn('Deterministic mode is activated. This will negatively impact performance.', category=UserWarning)
+
+configure_deterministic_mode()
 
 # Add the path of any pytest fixture files you want to make global
 pytest_plugins = [

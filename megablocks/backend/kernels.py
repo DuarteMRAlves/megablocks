@@ -336,6 +336,7 @@ def _binned_copy(
     BLOCK_X: tl.constexpr,
     A_TO_B: tl.constexpr,
     SCALE: tl.constexpr,
+    DTYPE: tl.constexpr,
 ):
     # Load our indices into the output.
     expert_idx = tl.program_id(0)
@@ -346,7 +347,7 @@ def _binned_copy(
 
     # Load the index bounds for our bin and calculate
     # the number of tokens assigned to our expert.
-    start = tl.zeros((), dtype=expert_idx.dtype)
+    start = tl.zeros((), dtype=DTYPE)
     if expert_idx > 0:
         start = tl.load(bins + expert_idx - 1)
     end = tl.load(bins + expert_idx)
@@ -401,7 +402,7 @@ def binned_gather(x, indices, weights, bins, expert_capacity, top_k):
 
     num_experts = bins.shape[0]
     out = torch.zeros((num_experts, expert_capacity, x.shape[1]), dtype=x.dtype, device=x.device)
-
+    tldype = tl.int32 if bins.dtype == torch.int32 else tl.int64
     _binned_copy[(num_experts, expert_capacity)](
         x,
         out,
@@ -414,6 +415,7 @@ def binned_gather(x, indices, weights, bins, expert_capacity, top_k):
         A_TO_B=True,
         TOP_K=top_k,
         SCALE=weights is not None,
+        DTYPE=tldype,
     )
     return out
 
@@ -431,6 +433,7 @@ def binned_scatter(x, indices, weights, bins, top_k):
     num_experts, expert_capacity, hidden_size = x.shape
     tokens = indices.shape[0] // top_k
     out = torch.zeros((tokens, top_k, hidden_size), dtype=x.dtype, device=x.device)
+    tldype = tl.int32 if bins.dtype == torch.int32 else tl.int64
     _binned_copy[(num_experts, expert_capacity)](
         out,
         x,
@@ -443,6 +446,7 @@ def binned_scatter(x, indices, weights, bins, top_k):
         A_TO_B=False,
         TOP_K=top_k,
         SCALE=weights is not None,
+        DTYPE=tldype,
     )
 
     # Reduce along the top-k dimension, if needed.
@@ -476,6 +480,7 @@ def _binned_copy_wgrad(
     NUM_COLUMNS: tl.constexpr,
     TOP_K: tl.constexpr,
     BLOCK_X: tl.constexpr,
+    DTYPE: tl.constexpr,
 ):
     # Load our indices into the output.
     expert_idx = tl.program_id(0)
@@ -486,7 +491,7 @@ def _binned_copy_wgrad(
 
     # Load the index bounds for our bin and calculate
     # the number of tokens assigned to our expert.
-    start = 0
+    start = tl.zeros((), dtype=DTYPE)
     if expert_idx > 0:
         start = tl.load(bins + expert_idx - 1)
     end = tl.load(bins + expert_idx)
@@ -529,6 +534,7 @@ def binned_scatter_wgrad(x, grad, indices, bins, top_k):
     num_experts, expert_capacity, hidden_size = x.shape
     tokens = indices.shape[0] // top_k
     out = torch.zeros((tokens * top_k), dtype=x.dtype, device=x.device)
+    tldype = tl.int32 if bins.dtype == torch.int32 else tl.int64
     _binned_copy_wgrad[(num_experts, expert_capacity)](
         x,
         grad,
@@ -539,5 +545,6 @@ def binned_scatter_wgrad(x, grad, indices, bins, top_k):
         bins,
         NUM_COLUMNS=hidden_size,
         TOP_K=top_k,
+        DTYPE=tldype,
     )
     return out

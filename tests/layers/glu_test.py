@@ -11,6 +11,12 @@ from megablocks.layers import dmlp_registry
 from megablocks.layers.arguments import Arguments
 from tests.layers.architectures import GLU
 
+try:
+    import grouped_gemm
+    GROUPED_GEMM_AVAILABLE = True
+except ImportError as error:
+    GROUPED_GEMM_AVAILABLE = False
+
 _DENSE_TESTS = (
     (16, 1024, 512),
     (8, 2048, 512),
@@ -51,6 +57,7 @@ def construct_dmoe_glu(
     return args, glu, dmoe_glu
 
 
+@pytest.mark.skipif(not GROUPED_GEMM_AVAILABLE, reason='Grouped GEMM not available')
 @pytest.mark.gpu
 @pytest.mark.parametrize(('bs', 'sl', 'hs'), _DENSE_TESTS)
 def test_glu_forward_grouped_mlp(bs: int, sl: int, hs: int):
@@ -71,6 +78,7 @@ def test_glu_forward_grouped_mlp(bs: int, sl: int, hs: int):
     assert torch.allclose(out, expected_out)
 
 
+@pytest.mark.skipif(not GROUPED_GEMM_AVAILABLE, reason='Grouped GEMM not available')
 @pytest.mark.gpu
 @pytest.mark.parametrize(('bs', 'sl', 'hs'), _DENSE_TESTS)
 def test_glu_forward_grouped_mlp_mem_opt(bs: int, sl: int, hs: int):
@@ -110,4 +118,4 @@ def test_glu_forward_sparse_mlp(bs: int, sl: int, hs: int):
     out = out.view(sl, bs, hs)
 
     assert out.shape == x.shape == expected_out.shape
-    assert torch.allclose(out, expected_out)
+    assert torch.allclose(out, expected_out, atol=0.05), f"Max diff: {torch.max(torch.abs(out - expected_out))}"

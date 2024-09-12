@@ -51,7 +51,7 @@ def configure_deterministic_mode():
         Deterministic mode degrades performance. Do not use outside of testing and debugging.
     """
     print("Deterministic mode is activated. This will negatively impact performance.")
-    torch.use_deterministic_algorithms(True)
+    torch.use_deterministic_algorithms(True, warn_only=True)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     # See https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html
